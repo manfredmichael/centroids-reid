@@ -107,7 +107,7 @@ def run_single(cfg, method, logger_save_dir):
         accelerator=cfg.SOLVER.DIST_BACKEND,
         num_sanity_val_steps=0,
         replace_sampler_ddp=False,
-        checkpoint_callback=checkpoint_callback,
+#         checkpoint_callback=checkpoint_callback,
         precision=16 if cfg.USE_MIXED_PRECISION else 32,
         resume_from_checkpoint=cfg.MODEL.PRETRAIN_PATH
         if cfg.MODEL.RESUME_TRAINING
