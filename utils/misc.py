@@ -113,7 +113,7 @@ def run_single(cfg, method, logger_save_dir):
         if cfg.MODEL.RESUME_TRAINING
         else None,
         callbacks=[periodic_checkpointer],
-        enable_pl_optimizer=True,
+#         enable_pl_optimizer=True,
         reload_dataloaders_every_epoch=True,
         automatic_optimization=cfg.SOLVER.USE_AUTOMATIC_OPTIM,
     )
