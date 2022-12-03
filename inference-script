@@ -1,0 +1,16 @@
+python3 inference.py \
+--config_file="configs/320_resnet50_ibn_a.yml" \
+--gallery_data='output-dir' \
+GPU_IDS None \
+TEST.IMS_PER_BATCH 128 \
+OUTPUT_DIR 'output-dir' \
+TEST.ONLY_TEST True \
+MODEL.PRETRAIN_PATH "logs/epoch=119.ckpt" \
+SOLVER.DISTANCE_FUNC 'cosine' \
+DATALOADER.NUM_WORKERS 4 \
+DATASETS.GALLERY_DIR 'data/my-image-dataset/' \
+DISTANCE_THRESHOLD 0.3 \
+DATASETS.QUERY_PATH 'data/query-images/1488_c6s3_094992_00.jpg.jpg'  
+
+--normalize_features \
+--topk=3 \

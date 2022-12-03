@@ -1,0 +1,9 @@
+python3 inference/create_embeddings.py \
+--config_file="configs/256_resnet50.yml" \
+GPU_IDS None \
+DATASETS.ROOT_DIR 'data/my-image-dataset/' \
+TEST.IMS_PER_BATCH 128 \
+OUTPUT_DIR 'output-dir' \
+TEST.ONLY_TEST True \
+MODEL.PRETRAIN_PATH "logs/epoch=119.ckpt" \
+DATALOADER.NUM_WORKERS 4

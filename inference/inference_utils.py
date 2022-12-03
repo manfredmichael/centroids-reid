@@ -86,6 +86,42 @@ class ImageDataset(Dataset):
             img_path,
         )  ## Hack to be consistent with ImageFolderWithPaths dataset
 
+class ImageDatasetFromArray(Dataset):
+    def __init__(self, dataset, transform=None):
+        """ TODO
+        ubat dataset jadi 
+        [PIL.IMage, ROI_ID],
+        [PIL.IMage, ROI_ID], ...
+        """
+        self.dataset = dataset 
+        self.transform = transform
+
+    def __len__(self):
+        return len(self.dataset)
+
+    def __getitem__(self, index):
+        img, ROI_id= self.dataset[index]
+
+        if self.transform is not None:
+            img = self.transform(img)
+        return (
+            img,
+            "",
+            ROI_id,
+        )  ## Hack to be consistent with ImageFolderWithPaths dataset
+
+def make_inference_data_loader_from_array(cfg, dataset):
+    transforms_base = ReidTransforms(cfg)
+    val_transforms = transforms_base.build_transforms(is_train=False)
+    num_workers = cfg.DATALOADER.NUM_WORKERS
+    val_set = ImageDatasetFromArray(dataset, val_transforms)
+    val_loader = DataLoader(
+        val_set,
+        batch_size=cfg.TEST.IMS_PER_BATCH,
+        shuffle=False,
+        num_workers=num_workers,
+    )
+    return val_loader
 
 def make_inference_data_loader(cfg, path, dataset_class):
     transforms_base = ReidTransforms(cfg)

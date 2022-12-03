@@ -55,6 +55,9 @@ _C.INPUT.PIXEL_STD = [0.229, 0.224, 0.225]
 # Value of padding size
 _C.INPUT.PADDING = 10
 
+# Embedding distance trhreshold
+_C.DISTANCE_THRESHOLD = 0.3
+
 # -----------------------------------------------------------------------------
 # DATASET
 # -----------------------------------------------------------------------------
@@ -63,6 +66,8 @@ _C.DATASETS = CN()
 _C.DATASETS.NAMES = "market1501"
 # Root directory where datasets should be used (and downloaded if not found)
 _C.DATASETS.ROOT_DIR = "/home/data"
+_C.DATASETS.GALLERY_DIR = "/home/data"
+_C.DATASETS.QUERY_PATH = "/home/data"
 # Path to json train file for datasets that require it
 _C.DATASETS.JSON_TRAIN_PATH = ""
 

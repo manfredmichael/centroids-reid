@@ -4,6 +4,7 @@ import os
 import sys
 from pathlib import Path
 
+from PIL import Image
 import numpy as np
 import torch
 
@@ -17,6 +18,7 @@ from inference_utils import (
     ImageDataset,
     ImageFolderWithPaths,
     make_inference_data_loader,
+    make_inference_data_loader_from_array,
     run_inference,
 )
 
@@ -71,20 +73,32 @@ if __name__ == "__main__":
     cfg.merge_from_list(args.opts)
 
     ### Data preparation
-    if args.images_in_subfolders:
-        dataset_type = ImageFolderWithPaths
-    else:
-        dataset_type = ImageDataset
-    log.info(f"Preparing data using {type(dataset_type)} dataset class")
-    val_loader = make_inference_data_loader(cfg, cfg.DATASETS.ROOT_DIR, dataset_type)
+    # if args.images_in_subfolders:
+    #     dataset_type = ImageFolderWithPaths
+    # else:
+    #     dataset_type = ImageDataset
+    # log.info(f"Preparing data using {type(dataset_type)} dataset class")
+    # val_loader = make_inference_data_loader(cfg, cfg.DATASETS.ROOT_DIR, dataset_type)
+
+    dataset = []
+    images = os.listdir(cfg.DATASETS.ROOT_DIR)
+    images = [os.path.join(cfg.DATASETS.ROOT_DIR, item) for item in images]
+    for image_path in images:
+        with open(image_path, "rb") as f:
+            img = Image.open(f)
+            img.convert("RGB")
+            dataset.append([img, image_path.split('/')[-1]])
+
+    val_loader = make_inference_data_loader_from_array(cfg, dataset)
 
     ### Build model
     model = CTLModel.load_from_checkpoint(cfg.MODEL.PRETRAIN_PATH)
+    use_cuda = True if torch.cuda.is_available() and cfg.GPU_IDS else False
 
     ### Inference
     log.info("Running inference")
     embeddings, paths = run_inference(
-        model, val_loader, cfg, print_freq=args.print_freq
+        model, val_loader, cfg, print_freq=args.print_freq, use_cuda=use_cuda
     )
 
     ### Load gallery data
@@ -110,7 +124,9 @@ if __name__ == "__main__":
     embeddings = embeddings.to(device)
 
     ### Calculate similarity
+    import time
     log.info("Calculating distance and getting the most similar ids per query")
+    t0 = time.time()
     dist_func = get_dist_func(cfg.SOLVER.DISTANCE_FUNC)
     distmat = dist_func(x=embeddings, y=embeddings_gallery).cpu().numpy()
     indices = np.argsort(distmat, axis=1)
@@ -126,6 +142,8 @@ if __name__ == "__main__":
         }
         for q_num, query_path in enumerate(paths)
     }
+    t = time.time() - t0
+    print("Similarity creation time:", t)
 
     ### Save
     SAVE_DIR = Path(cfg.OUTPUT_DIR)

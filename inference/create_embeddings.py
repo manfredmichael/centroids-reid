@@ -3,6 +3,7 @@ import logging
 import os
 import sys
 from pathlib import Path
+from PIL import Image
 
 import numpy as np
 import torch
@@ -15,9 +16,11 @@ from train_ctl_model import CTLModel
 from inference_utils import (
     ImageDataset,
     ImageFolderWithPaths,
+    ImageDatasetFromArray,
     calculate_centroids,
     create_pid_path_index,
     make_inference_data_loader,
+    make_inference_data_loader_from_array,
     run_inference,
 )
 
@@ -63,21 +66,34 @@ if __name__ == "__main__":
     cfg.merge_from_list(args.opts)
 
     ### Data preparation
-    if args.images_in_subfolders:
-        dataset_type = ImageFolderWithPaths
-    else:
-        dataset_type = ImageDataset
-    log.info(f"Preparing data using {dataset_type} dataset class")
-    val_loader = make_inference_data_loader(cfg, cfg.DATASETS.ROOT_DIR, dataset_type)
+    # if args.images_in_subfolders:
+    #     dataset_type = ImageFolderWithPaths
+    # else:
+    #     dataset_type = ImageDataset
+    # log.info(f"Preparing data using {dataset_type} dataset class")
+    # val_loader = make_inference_data_loader(cfg, cfg.DATASETS.ROOT_DIR, dataset_type)
+    dataset = []
+    images = os.listdir(cfg.DATASETS.ROOT_DIR)
+    images = [os.path.join(cfg.DATASETS.ROOT_DIR, item) for item in images]
+    for image_path in images:
+        with open(image_path, "rb") as f:
+            img = Image.open(f)
+            img.convert("RGB")
+            dataset.append([img, image_path.split('/')[-1]])
+
+    val_loader = make_inference_data_loader_from_array(cfg, dataset)
     if len(val_loader) == 0:
         raise RuntimeError("Lenght of dataloader = 0")
+
 
     ### Build model
     model = CTLModel.load_from_checkpoint(cfg.MODEL.PRETRAIN_PATH)
     use_cuda = True if torch.cuda.is_available() and cfg.GPU_IDS else False
 
     ### Inference
+    import time
     log.info("Running inference")
+    t0 = time.time()
     embeddings, paths = run_inference(
         model, val_loader, cfg, print_freq=args.print_freq, use_cuda=use_cuda
     )
@@ -87,6 +103,8 @@ if __name__ == "__main__":
     if cfg.MODEL.USE_CENTROIDS:
         pid_path_index = create_pid_path_index(paths=paths, func=exctract_func)
         embeddings, paths = calculate_centroids(embeddings, pid_path_index)
+    t = time.time() - t0
+    print("Embedding creation time:", t)
 
     ### Save
     SAVE_DIR = Path(cfg.OUTPUT_DIR)
