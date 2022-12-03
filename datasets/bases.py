@@ -100,10 +100,10 @@ class ReidBaseDataModule(pl.LightningDataModule):
     def train_dataloader(
         self, cfg, trainer, sampler_name: str = "random_identity", **kwargs
     ):
-        if trainer.distributed_backend == "ddp_spawn":
-            rank = trainer.root_gpu
-        else:
-            rank = trainer.local_rank
+#         if trainer.distributed_backend == "ddp_spawn":
+#             rank = trainer.root_gpu
+#         else:
+        rank = trainer.local_rank
         world_size = trainer.num_nodes * trainer.num_processes
         sampler = get_sampler(
             sampler_name,
