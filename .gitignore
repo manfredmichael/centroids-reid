@@ -147,3 +147,4 @@ debugs/
 *.c
 
 data/
+output-dir/
